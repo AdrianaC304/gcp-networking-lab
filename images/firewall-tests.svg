@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 380" width="1000" height="380" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#188038"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#C5221F"/></marker>
+  </defs>
+  <rect width="1000" height="380" fill="#FFFFFF"/>
+  <text x="30" y="36" font-size="16" font-weight="bold" fill="#1F2A44">Which connections should work after Part 3?</text>
+  <text x="30" y="58" font-size="12" fill="#5F6368">Every packet is checked against the rules by priority. If nothing allows it, the implied deny drops it.</text>
+
+  <g font-size="13">
+    <!-- row 1 -->
+    <rect x="30" y="80" width="170" height="44" rx="8" fill="#FFFFFF" stroke="#5F6368"/><text x="115" y="107" text-anchor="middle" font-weight="bold" fill="#1F2A44">Internet</text>
+    <line x1="200" y1="102" x2="356" y2="102" stroke="#188038" stroke-width="2" marker-end="url(#g)"/><text x="278" y="94" text-anchor="middle" font-size="11" font-weight="bold" fill="#188038">tcp:80</text>
+    <rect x="360" y="80" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="445" y="107" text-anchor="middle" font-weight="bold" fill="#1F2A44">web-vm</text>
+    <rect x="560" y="85" width="410" height="34" rx="6" fill="#E6F4EA"/><text x="575" y="107" fill="#188038" font-weight="bold">ALLOWED</text><text x="660" y="107" fill="#3C4043">by allow-http</text>
+
+    <!-- row 2 -->
+    <rect x="30" y="140" width="170" height="44" rx="8" fill="#FFFFFF" stroke="#5F6368"/><text x="115" y="167" text-anchor="middle" font-weight="bold" fill="#1F2A44">Internet</text>
+    <line x1="200" y1="162" x2="356" y2="162" stroke="#C5221F" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#r)"/><text x="278" y="154" text-anchor="middle" font-size="11" font-weight="bold" fill="#C5221F">tcp:22</text>
+    <rect x="360" y="140" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="445" y="167" text-anchor="middle" font-weight="bold" fill="#1F2A44">web-vm</text>
+    <rect x="560" y="145" width="410" height="34" rx="6" fill="#FCE8E6"/><text x="575" y="167" fill="#C5221F" font-weight="bold">BLOCKED</text><text x="660" y="167" fill="#3C4043">SSH is only open to the IAP range</text>
+
+    <!-- row 3 -->
+    <rect x="30" y="200" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="115" y="227" text-anchor="middle" font-weight="bold" fill="#1F2A44">web-vm</text>
+    <line x1="200" y1="222" x2="356" y2="222" stroke="#188038" stroke-width="2" marker-end="url(#g)"/><text x="278" y="214" text-anchor="middle" font-size="11" font-weight="bold" fill="#188038">tcp:5432</text>
+    <rect x="360" y="200" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="445" y="227" text-anchor="middle" font-weight="bold" fill="#1F2A44">db-vm</text>
+    <rect x="560" y="205" width="410" height="34" rx="6" fill="#E6F4EA"/><text x="575" y="227" fill="#188038" font-weight="bold">ALLOWED</text><text x="660" y="227" fill="#3C4043">by allow-db-from-web (source tag)</text>
+
+    <!-- row 4 -->
+    <rect x="30" y="260" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="115" y="287" text-anchor="middle" font-weight="bold" fill="#1F2A44">db-vm</text>
+    <line x1="200" y1="282" x2="356" y2="282" stroke="#188038" stroke-width="2" marker-end="url(#g)"/><text x="278" y="274" text-anchor="middle" font-size="11" font-weight="bold" fill="#188038">tcp:80</text>
+    <rect x="360" y="260" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="445" y="287" text-anchor="middle" font-weight="bold" fill="#1F2A44">web-vm</text>
+    <rect x="560" y="265" width="410" height="34" rx="6" fill="#E6F4EA"/><text x="575" y="287" fill="#188038" font-weight="bold">ALLOWED</text><text x="660" y="287" fill="#3C4043">allow-http uses 0.0.0.0/0 (includes internal IPs)</text>
+
+    <!-- row 5 -->
+    <rect x="30" y="320" width="170" height="44" rx="8" fill="#FFFFFF" stroke="#5F6368"/><text x="115" y="347" text-anchor="middle" font-weight="bold" fill="#1F2A44">Internet</text>
+    <line x1="200" y1="342" x2="356" y2="342" stroke="#C5221F" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#r)"/><text x="278" y="334" text-anchor="middle" font-size="11" font-weight="bold" fill="#C5221F">tcp:5432</text>
+    <rect x="360" y="320" width="170" height="44" rx="8" fill="#E8F0FE" stroke="#AECBFA"/><text x="445" y="347" text-anchor="middle" font-weight="bold" fill="#1F2A44">db-vm</text>
+    <rect x="560" y="325" width="410" height="34" rx="6" fill="#FCE8E6"/><text x="575" y="347" fill="#C5221F" font-weight="bold">BLOCKED</text><text x="660" y="347" fill="#3C4043">no external IP, and no rule allows it</text>
+  </g>
+</svg>

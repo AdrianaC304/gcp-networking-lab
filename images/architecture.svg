@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="aBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1A73E8"/></marker>
+    <marker id="aGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#188038"/></marker>
+    <marker id="aOrange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E37400"/></marker>
+    <marker id="aGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5F6368"/></marker>
+  </defs>
+  <rect width="1000" height="560" fill="#FFFFFF"/>
+
+  <!-- Internet (ingress) -->
+  <rect x="20" y="150" width="120" height="64" rx="10" fill="#FFFFFF" stroke="#5F6368" stroke-width="1.5"/>
+  <text x="80" y="178" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">Internet</text>
+  <text x="80" y="198" text-anchor="middle" font-size="11" fill="#5F6368">users · curl</text>
+
+  <!-- IAP -->
+  <rect x="20" y="300" width="120" height="64" rx="10" fill="#FFFFFF" stroke="#5F6368" stroke-width="1.5"/>
+  <text x="80" y="326" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">IAP (SSH)</text>
+  <text x="80" y="346" text-anchor="middle" font-size="11" fill="#5F6368">35.235.240.0/20</text>
+
+  <!-- vpc-prod -->
+  <rect x="170" y="40" width="530" height="480" rx="14" fill="#F8FBFF" stroke="#1A73E8" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="190" y="66" font-size="15" font-weight="bold" fill="#1A73E8">vpc-prod</text>
+  <text x="270" y="66" font-size="12" fill="#5F6368">custom mode · global</text>
+
+  <!-- subnet-us -->
+  <rect x="190" y="85" width="235" height="190" rx="10" fill="#FFFFFF" stroke="#AECBFA" stroke-width="1.2"/>
+  <text x="205" y="107" font-size="12" font-weight="bold" fill="#1F2A44">subnet-us</text>
+  <text x="205" y="124" font-size="11" fill="#5F6368">us-central1 · 10.10.0.0/24</text>
+  <rect x="215" y="145" width="185" height="105" rx="8" fill="#E8F0FE" stroke="#AECBFA" stroke-width="1.2"/>
+  <text x="307" y="172" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">web-vm</text>
+  <text x="307" y="192" text-anchor="middle" font-size="11" fill="#5F6368">tag: web</text>
+  <text x="307" y="209" text-anchor="middle" font-size="11" fill="#5F6368">nginx · tcp:80</text>
+  <text x="307" y="232" text-anchor="middle" font-size="11" fill="#1A73E8">external IP</text>
+
+  <!-- subnet-eu -->
+  <rect x="445" y="85" width="235" height="190" rx="10" fill="#FFFFFF" stroke="#AECBFA" stroke-width="1.2"/>
+  <text x="460" y="107" font-size="12" font-weight="bold" fill="#1F2A44">subnet-eu</text>
+  <text x="460" y="124" font-size="11" fill="#5F6368">europe-west1 · 10.20.0.0/24</text>
+  <rect x="470" y="145" width="185" height="105" rx="8" fill="#E8F0FE" stroke="#AECBFA" stroke-width="1.2"/>
+  <text x="562" y="172" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">db-vm</text>
+  <text x="562" y="192" text-anchor="middle" font-size="11" fill="#5F6368">tag: db</text>
+  <text x="562" y="209" text-anchor="middle" font-size="11" fill="#5F6368">fake DB · tcp:5432</text>
+  <text x="562" y="232" text-anchor="middle" font-size="11" fill="#C5221F">no external IP</text>
+
+  <!-- web -> db -->
+  <line x1="400" y1="198" x2="466" y2="198" stroke="#188038" stroke-width="2" marker-end="url(#aGreen)"/>
+  <text x="433" y="190" text-anchor="middle" font-size="10" font-weight="bold" fill="#188038">5432</text>
+
+  <!-- Firewall table -->
+  <rect x="190" y="295" width="490" height="205" rx="10" fill="#FFFFFF" stroke="#E3E5E8" stroke-width="1.2"/>
+  <text x="205" y="320" font-size="12" font-weight="bold" fill="#1F2A44">Firewall rules (vpc-prod)</text>
+  <g font-size="11" fill="#3C4043">
+    <text x="205" y="346" font-weight="bold" fill="#5F6368">rule</text><text x="370" y="346" font-weight="bold" fill="#5F6368">allows</text><text x="520" y="346" font-weight="bold" fill="#5F6368">from → to</text>
+    <line x1="205" y1="354" x2="665" y2="354" stroke="#E3E5E8"/>
+    <text x="205" y="374">allow-iap-ssh</text><text x="370" y="374">tcp:22</text><text x="520" y="374">IAP range → all</text>
+    <text x="205" y="396">allow-http</text><text x="370" y="396">tcp:80</text><text x="520" y="396">0.0.0.0/0 → web</text>
+    <text x="205" y="418">allow-db-from-web</text><text x="370" y="418">tcp:5432</text><text x="520" y="418">tag web → db</text>
+    <text x="205" y="440">allow-db-from-shared</text><text x="370" y="440">tcp:5432</text><text x="520" y="440">10.30.0.0/24 → db</text>
+    <line x1="205" y1="452" x2="665" y2="452" stroke="#E3E5E8"/>
+    <text x="205" y="472" fill="#C5221F">implied deny ingress</text><text x="370" y="472" fill="#5F6368">priority 65535</text><text x="520" y="472" fill="#5F6368">everything else</text>
+    <text x="205" y="490" fill="#188038">implied allow egress</text><text x="370" y="490" fill="#5F6368">priority 65535</text><text x="520" y="490" fill="#5F6368">all outbound</text>
+  </g>
+
+  <!-- Internet -> web -->
+  <line x1="140" y1="182" x2="211" y2="182" stroke="#1A73E8" stroke-width="2" marker-end="url(#aBlue)"/>
+  <text x="155" y="174" text-anchor="middle" font-size="11" font-weight="bold" fill="#1A73E8">80</text>
+  <!-- IAP -> vpc -->
+  <path d="M140 332 L160 332 L160 236 L211 236" fill="none" stroke="#5F6368" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#aGray)"/>
+  <text x="166" y="290" font-size="10" font-weight="bold" fill="#5F6368">22</text>
+
+  <!-- Cloud NAT + egress -->
+  <rect x="740" y="30" width="240" height="56" rx="10" fill="#FFFFFF" stroke="#5F6368" stroke-width="1.5"/>
+  <text x="860" y="55" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">Internet (egress)</text>
+  <text x="860" y="73" text-anchor="middle" font-size="11" fill="#5F6368">apt · package mirrors</text>
+  <rect x="740" y="140" width="240" height="70" rx="10" fill="#FEF7E0" stroke="#F9AB00" stroke-width="1.5"/>
+  <text x="860" y="168" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">Cloud Router + Cloud NAT</text>
+  <text x="860" y="188" text-anchor="middle" font-size="11" fill="#5F6368">europe-west1 · outbound only</text>
+  <path d="M655 165 L720 165 L740 172" fill="none" stroke="#E37400" stroke-width="2" marker-end="url(#aOrange)"/>
+  <line x1="860" y1="140" x2="860" y2="90" stroke="#E37400" stroke-width="2" marker-end="url(#aOrange)"/>
+
+  <!-- vpc-shared -->
+  <rect x="740" y="300" width="240" height="200" rx="14" fill="#F3FAF5" stroke="#188038" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="758" y="326" font-size="15" font-weight="bold" fill="#188038">vpc-shared</text>
+  <text x="758" y="346" font-size="11" fill="#5F6368">subnet-shared · us-central1</text>
+  <text x="758" y="362" font-size="11" fill="#5F6368">10.30.0.0/24</text>
+  <rect x="770" y="380" width="180" height="90" rx="8" fill="#E6F4EA" stroke="#A8DAB5" stroke-width="1.2"/>
+  <text x="860" y="410" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2A44">tools-vm</text>
+  <text x="860" y="430" text-anchor="middle" font-size="11" fill="#5F6368">monitoring tools</text>
+  <text x="860" y="450" text-anchor="middle" font-size="11" fill="#C5221F">no external IP</text>
+
+  <!-- peering -->
+  <line x1="704" y1="400" x2="736" y2="400" stroke="#188038" stroke-width="2.5" marker-start="url(#aGreen)" marker-end="url(#aGreen)"/>
+  <text x="720" y="424" text-anchor="middle" font-size="10" font-weight="bold" fill="#188038">peering</text>
+</svg>
