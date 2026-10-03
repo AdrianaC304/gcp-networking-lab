@@ -1,4 +1,4 @@
-# GCP Networking Lab — VPC, Subnets, Firewalls, Cloud NAT and VPC Peering
+# GCP Networking Lab 
 
 Hands-on exercise for the **GCP Networking** session (*Networking and connectivity*). You build a small, realistic network from scratch: a public web server, a private database, the firewall rules between them, outbound internet for the private VM, and a second network connected by VPC peering.
 
@@ -10,20 +10,49 @@ Every step has three parts. **Why** explains the concept from the slides, **Do i
 
 ## Table of contents
 
-- [What you will learn](#what-you-will-learn)
-- [Before you start](#before-you-start)
-- [Repository structure](#repository-structure)
-- [Part 0 — Set up Cloud Shell](#part-0--set-up-cloud-shell)
-- [Part 1 — Create a custom VPC with two subnets](#part-1--create-a-custom-vpc-with-two-subnets)
-- [Part 2 — Create the VMs](#part-2--create-the-vms)
-- [Part 3 — Firewall rules: from "nothing works" to least privilege](#part-3--firewall-rules-from-nothing-works-to-least-privilege)
-- [Part 4 — Egress: give the private VM internet with Cloud NAT](#part-4--egress-give-the-private-vm-internet-with-cloud-nat)
-- [Part 5 — Connect a second VPC with VPC peering](#part-5--connect-a-second-vpc-with-vpc-peering)
-- [Part 6 — Challenge: peering is not transitive](#part-6--challenge-peering-is-not-transitive)
-- [Review questions](#review-questions)
-- [Troubleshooting](#troubleshooting)
-- [Clean up](#clean-up)
-- [References](#references)
+- [GCP Networking Lab](#gcp-networking-lab)
+  - [Table of contents](#table-of-contents)
+  - [What you will learn](#what-you-will-learn)
+  - [Before you start](#before-you-start)
+  - [Part 0 — Set up Cloud Shell](#part-0--set-up-cloud-shell)
+    - [Do it](#do-it)
+    - [Check](#check)
+  - [Part 1 — Create a custom VPC with two subnets](#part-1--create-a-custom-vpc-with-two-subnets)
+    - [Why](#why)
+    - [Do it](#do-it-1)
+    - [Check](#check-1)
+  - [Part 2 — Create the VMs](#part-2--create-the-vms)
+    - [Why](#why-1)
+    - [Do it](#do-it-2)
+    - [Check](#check-2)
+  - [Part 3 — Firewall rules: from "nothing works" to least privilege](#part-3--firewall-rules-from-nothing-works-to-least-privilege)
+    - [Why](#why-2)
+    - [3.1 Prove that everything is closed](#31-prove-that-everything-is-closed)
+    - [3.2 Allow SSH only through IAP](#32-allow-ssh-only-through-iap)
+    - [3.3 Open the web to the internet, only for VMs tagged `web`](#33-open-the-web-to-the-internet-only-for-vms-tagged-web)
+    - [3.4 Database: only the web can reach it](#34-database-only-the-web-can-reach-it)
+    - [3.5 Log what gets blocked](#35-log-what-gets-blocked)
+    - [3.6 Priorities: a DENY with more priority wins](#36-priorities-a-deny-with-more-priority-wins)
+    - [3.7 Check: the expected results](#37-check-the-expected-results)
+    - [3.8 See the logs in Cloud Logging](#38-see-the-logs-in-cloud-logging)
+  - [Part 4 — Egress: give the private VM internet with Cloud NAT](#part-4--egress-give-the-private-vm-internet-with-cloud-nat)
+    - [Why](#why-3)
+    - [4.1 Check that db-vm has no internet](#41-check-that-db-vm-has-no-internet)
+    - [4.2 Create Cloud Router + Cloud NAT in europe-west1](#42-create-cloud-router--cloud-nat-in-europe-west1)
+    - [4.3 Check](#43-check)
+    - [4.4 Egress rules: block outbound traffic too](#44-egress-rules-block-outbound-traffic-too)
+  - [Part 5 — Connect a second VPC with VPC peering](#part-5--connect-a-second-vpc-with-vpc-peering)
+    - [Why](#why-4)
+    - [5.1 Create the second network and a VM with no external IP](#51-create-the-second-network-and-a-vm-with-no-external-ip)
+    - [5.2 Before peering: no route](#52-before-peering-no-route)
+    - [5.3 Create the peering (both sides)](#53-create-the-peering-both-sides)
+    - [5.4 Test again](#54-test-again)
+    - [Check](#check-3)
+  - [Part 6 — Challenge: peering is not transitive](#part-6--challenge-peering-is-not-transitive)
+  - [Review questions](#review-questions)
+  - [Troubleshooting](#troubleshooting)
+  - [Clean up](#clean-up)
+  - [References](#references)
 
 ---
 
@@ -52,30 +81,6 @@ You need:
 > [!WARNING]
 > **Cost.** The lab uses three or four `e2-micro` VMs, one Cloud NAT gateway and a few logs. If you finish it in one go and run the [clean-up](#clean-up), the cost is a few cents. **If you forget to clean up, the VMs and Cloud NAT keep charging every hour.**
 
----
-
-## Repository structure
-
-```text
-gcp-networking-lab/
-├── README.md                 ← this guide
-├── images/                   ← diagrams used in the guide
-├── startup/
-│   ├── web.sh                ← installs nginx on web-vm
-│   └── db.sh                 ← fake database on tcp:5432 (python3, no internet needed)
-└── scripts/
-    ├── 00-env.sh             ← shared variables (source it in every new terminal)
-    ├── 01-network.sh         ← Part 1 solution
-    ├── 02-vms.sh             ← Part 2 solution
-    ├── 03-firewall.sh        ← Part 3 solution
-    ├── 04-nat.sh             ← Part 4 solution
-    ├── 05-peering.sh         ← Part 5 solution
-    ├── test-connectivity.sh  ← runs every check and prints OK / BLOCKED
-    └── 99-cleanup.sh         ← deletes everything
-```
-
-> [!TIP]
-> The scripts in `scripts/` are the **solutions**. Try typing the commands from this guide first, because that is where you learn. If you get stuck, run the script for that part and keep going.
 
 ---
 
