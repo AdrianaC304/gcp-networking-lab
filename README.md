@@ -8,54 +8,6 @@ Every step has three parts. **Why** explains the concept from the slides, **Do i
 
 ---
 
-## Table of contents
-
-- [GCP Networking Lab](#gcp-networking-lab)
-  - [Table of contents](#table-of-contents)
-  - [What you will learn](#what-you-will-learn)
-  - [Before you start](#before-you-start)
-  - [Part 0 — Set up Cloud Shell](#part-0--set-up-cloud-shell)
-    - [Do it](#do-it)
-    - [Check](#check)
-  - [Part 1 — Create a custom VPC with two subnets](#part-1--create-a-custom-vpc-with-two-subnets)
-    - [Why](#why)
-    - [Do it](#do-it-1)
-    - [Check](#check-1)
-  - [Part 2 — Create the VMs](#part-2--create-the-vms)
-    - [Why](#why-1)
-    - [Do it](#do-it-2)
-    - [Check](#check-2)
-  - [Part 3 — Firewall rules: from "nothing works" to least privilege](#part-3--firewall-rules-from-nothing-works-to-least-privilege)
-    - [Why](#why-2)
-    - [3.1 Prove that everything is closed](#31-prove-that-everything-is-closed)
-    - [3.2 Allow SSH only through IAP](#32-allow-ssh-only-through-iap)
-    - [3.3 Open the web to the internet, only for VMs tagged `web`](#33-open-the-web-to-the-internet-only-for-vms-tagged-web)
-    - [3.4 Database: only the web can reach it](#34-database-only-the-web-can-reach-it)
-    - [3.5 Log what gets blocked](#35-log-what-gets-blocked)
-    - [3.6 Priorities: a DENY with more priority wins](#36-priorities-a-deny-with-more-priority-wins)
-    - [3.7 Check: the expected results](#37-check-the-expected-results)
-    - [3.8 See the logs in Cloud Logging](#38-see-the-logs-in-cloud-logging)
-  - [Part 4 — Egress: give the private VM internet with Cloud NAT](#part-4--egress-give-the-private-vm-internet-with-cloud-nat)
-    - [Why](#why-3)
-    - [4.1 Check that db-vm has no internet](#41-check-that-db-vm-has-no-internet)
-    - [4.2 Create Cloud Router + Cloud NAT in europe-west1](#42-create-cloud-router--cloud-nat-in-europe-west1)
-    - [4.3 Check](#43-check)
-    - [4.4 Egress rules: block outbound traffic too](#44-egress-rules-block-outbound-traffic-too)
-  - [Part 5 — Connect a second VPC with VPC peering](#part-5--connect-a-second-vpc-with-vpc-peering)
-    - [Why](#why-4)
-    - [5.1 Create the second network and a VM with no external IP](#51-create-the-second-network-and-a-vm-with-no-external-ip)
-    - [5.2 Before peering: no route](#52-before-peering-no-route)
-    - [5.3 Create the peering (both sides)](#53-create-the-peering-both-sides)
-    - [5.4 Test again](#54-test-again)
-    - [Check](#check-3)
-  - [Part 6 — Challenge: peering is not transitive](#part-6--challenge-peering-is-not-transitive)
-  - [Review questions](#review-questions)
-  - [Troubleshooting](#troubleshooting)
-  - [Clean up](#clean-up)
-  - [References](#references)
-
----
-
 ## What you will learn
 
 | Session topic | What you do in this lab |
