@@ -18,9 +18,6 @@ Every step has three parts. **Why** explains the concept from the slides, **Do i
 | **Ingress and egress** | Keep a VM private (no external IP) and give it outbound internet with Cloud NAT. Block egress with a firewall rule. |
 | **VPC peering** | Connect two VPCs over internal IPs and prove that peering is **not transitive**. |
 
-**Time:** about 90 minutes (plus about 20 for the challenge).
-**Level:** beginner/intermediate. You only need to be comfortable with a terminal.
-
 ---
 
 ## Before you start
@@ -36,7 +33,7 @@ You need:
 
 ---
 
-## Part 0 — Set up Cloud Shell
+## Set up Cloud Shell
 
 ### Do it
 
