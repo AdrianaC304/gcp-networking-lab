@@ -68,8 +68,6 @@ Regions:  us-central1 (us-central1-a) and europe-west1 (europe-west1-b)
 
 ## Part 1 — Create a custom VPC with two subnets
 
-### Why
-
 Every new project includes a `default` network in **auto mode**, with one subnet per region and fairly open firewall rules. It is convenient, but you do not decide the IP ranges and it opens more than you need. In production you use **custom mode**: you create only the subnets you need, with ranges you choose.
 
 Two ideas from the session that you will see here:
@@ -82,13 +80,14 @@ Two ideas from the session that you will see here:
 | `subnet-us` | us-central1 | `10.10.0.0/24` | 252 (Google reserves 4 per subnet) |
 | `subnet-eu` | europe-west1 | `10.20.0.0/24` | 252 |
 
-### Do it
 
 ```bash
 gcloud compute networks create vpc-prod \
   --subnet-mode=custom \
   --bgp-routing-mode=global
+```
 
+```bash
 gcloud compute networks subnets create subnet-us \
   --network=vpc-prod --region=us-central1 --range=10.10.0.0/24
 
@@ -108,7 +107,7 @@ subnet-eu  europe-west1  vpc-prod  10.20.0.0/24
 subnet-us  us-central1   vpc-prod  10.10.0.0/24
 ```
 
-In the console: **VPC network → VPC networks → vpc-prod**. Open the **Firewall** tab and notice it is **empty**. That is important for Part 3.
+**VPC networks → vpc-prod**. Open the **Firewall** tab and notice it is **empty**. That is important for Part 3.
 
 > [!NOTE]
 > **Think about it:** try to create a third subnet with range `10.10.0.0/16`. What happens and why?
@@ -116,8 +115,6 @@ In the console: **VPC network → VPC networks → vpc-prod**. Open the **Firewa
 ---
 
 ## Part 2 — Create the VMs
-
-### Why
 
 We will simulate a classic two-tier application:
 
@@ -138,7 +135,9 @@ gcloud compute instances create web-vm \
   --subnet=subnet-us --tags=web \
   --image-family=debian-12 --image-project=debian-cloud \
   --metadata-from-file=startup-script=startup/web.sh
+```
 
+```bash
 gcloud compute instances create db-vm \
   --zone=europe-west1-b --machine-type=e2-micro \
   --subnet=subnet-eu --tags=db --no-address \
@@ -167,8 +166,6 @@ gcloud compute instances list
 
 ## Part 3 — Firewall rules: from "nothing works" to least privilege
 
-### Why
-
 Every VPC has two **implied rules** that you cannot see or delete. Both have the lowest priority (65535):
 
 | Implied rule | Effect |
@@ -180,14 +177,14 @@ GCP firewall rules are **stateful**: if a connection is allowed in, its reply go
 
 Anatomy of a rule:
 
-| Field | Example | Meaning |
+| Field | Meaning | Example | 
 |---|---|---|
-| Direction | `INGRESS` | inbound or outbound traffic |
-| Priority | `1000` | 0–65535, lower wins |
-| Action | `ALLOW` / `DENY` | what to do if it matches |
-| Target | `--target-tags=web` | which VMs it applies to |
-| Source | `--source-ranges` / `--source-tags` | where the traffic comes from |
-| Protocol / port | `tcp:80` | which traffic |
+| Direction | inbound or outbound traffic | `INGRESS` |
+| Priority | 0–65535, lower wins | `1000` |
+| Action | what to do if it matches | `ALLOW` / `DENY` |
+| Target | which VMs it applies to | `--target-tags=web` |
+| Source | where the traffic comes from | `--source-ranges` / `--source-tags` |
+| Protocol / port | which traffic | `tcp:80` |
 
 ### 3.1 Prove that everything is closed
 
@@ -224,7 +221,9 @@ gcloud compute firewall-rules create allow-http \
   --network=vpc-prod --direction=INGRESS --action=ALLOW \
   --rules=tcp:80 --source-ranges=0.0.0.0/0 --target-tags=web \
   --priority=1000 --enable-logging
+```
 
+```bash
 curl http://$WEB_EXT
 # <h1>Hello from web-vm</h1>
 ```
@@ -238,7 +237,6 @@ First, check that it is blocked:
 ```bash
 gcloud compute ssh web-vm --zone=us-central1-a --tunnel-through-iap \
   --command="curl -s --max-time 5 http://$DB_INT:5432 || echo BLOCKED"
-# BLOCKED
 ```
 
 Create the rule and try again:
@@ -248,11 +246,8 @@ gcloud compute firewall-rules create allow-db-from-web \
   --network=vpc-prod --direction=INGRESS --action=ALLOW \
   --rules=tcp:5432 --source-tags=web --target-tags=db \
   --priority=1000 --enable-logging
-
-gcloud compute ssh web-vm --zone=us-central1-a --tunnel-through-iap \
-  --command="curl -s --max-time 5 http://$DB_INT:5432"
-# fake-db OK from db-vm (10.20.0.x)
 ```
+
 
 > [!IMPORTANT]
 > `web-vm` is in **us-central1** and `db-vm` in **europe-west1**, yet they talk over **internal IPs** without a VPN or peering. That is because the VPC is **global**.
@@ -276,7 +271,9 @@ Create a temporary rule that blocks port 80 with **priority 500**. It is a lower
 gcloud compute firewall-rules create deny-http-temp \
   --network=vpc-prod --direction=INGRESS --action=DENY \
   --rules=tcp:80 --source-ranges=0.0.0.0/0 --target-tags=web --priority=500
+```
 
+```bash
 sleep 10; curl -s --max-time 5 http://$WEB_EXT || echo "BLOCKED by deny-http-temp"
 ```
 
@@ -284,6 +281,9 @@ Delete it and check that the web works again:
 
 ```bash
 gcloud compute firewall-rules delete deny-http-temp --quiet
+```
+
+```bash
 sleep 10; curl http://$WEB_EXT
 ```
 
@@ -315,8 +315,6 @@ Each entry has the source and destination IP and port (`jsonPayload.connection`)
 
 ## Part 4 — Egress: give the private VM internet with Cloud NAT
 
-### Why
-
 `db-vm` has no external IP, so it cannot download updates or packages. But we **do not** want to give it a public IP, because that would expose it to the internet.
 
 **Cloud NAT** solves this: it translates the private IPs of a region to a public IP **for outbound traffic only**. Nobody from the internet can start a connection to the VM. Cloud NAT is regional and needs a **Cloud Router**, which here only serves as its control plane.
@@ -326,8 +324,8 @@ Each entry has the source and destination IP and port (`jsonPayload.connection`)
 ```bash
 gcloud compute ssh db-vm --zone=europe-west1-b --tunnel-through-iap \
   --command="curl -s -o /dev/null -w '%{http_code}\n' --max-time 5 https://deb.debian.org || echo NO_INTERNET"
-# NO_INTERNET
 ```
+NO_INTERNET
 
 ### 4.2 Create Cloud Router + Cloud NAT in europe-west1
 
@@ -378,8 +376,6 @@ gcloud compute firewall-rules delete deny-db-egress-https --quiet
 ---
 
 ## Part 5 — Connect a second VPC with VPC peering
-
-### Why
 
 Imagine another team manages monitoring tools in **its own VPC** (`vpc-shared`). They need to reach our servers over **internal IPs**, without going through the internet and without merging the networks. That is **VPC peering**:
 
@@ -566,19 +562,6 @@ Yes. If an inbound connection is allowed, its reply traffic is allowed automatic
 
 ---
 
-## Troubleshooting
-
-| Problem | Likely cause and fix |
-|---|---|
-| `gcloud compute ssh ... --tunnel-through-iap` fails with `failed to connect to backend` or error `4003` | The `allow-iap-ssh` rule is missing in that VPC, or the VM is still booting. Wait 30 s and check the rule exists. |
-| `curl http://$WEB_EXT` returns `Connection refused` (not a timeout) | The firewall lets it through, but nginx is not running yet. The startup script takes 1–2 minutes; check with `gcloud compute instances get-serial-port-output web-vm --zone=us-central1-a \| grep startup-script`. |
-| The variables `$WEB_EXT`, `$DB_INT`… are empty | You opened a new Cloud Shell tab. Run `source scripts/00-env.sh` and re-run the `export` lines from Part 2. |
-| A firewall change does not seem to apply | Rules take a few seconds to propagate. Wait 10–20 s. |
-| The peering stays `INACTIVE` | You only created one side. Create the peering from the other VPC as well. |
-| `Quota exceeded` when creating VMs | Projects with free credits have low limits. Use `e2-micro` and delete VMs you no longer need. |
-
----
-
 ## Clean up
 
 > [!CAUTION]
@@ -593,12 +576,3 @@ The script deletes, in order: VMs → peerings → Cloud NAT and router → fire
 
 ---
 
-## References
-
-- [VPC networks overview](https://cloud.google.com/vpc/docs/vpc)
-- [Subnets and IP ranges](https://cloud.google.com/vpc/docs/subnets)
-- [VPC firewall rules](https://cloud.google.com/firewall/docs/firewalls)
-- [Firewall Rules Logging](https://cloud.google.com/firewall/docs/firewall-rules-logging)
-- [Using IAP for TCP forwarding](https://cloud.google.com/iap/docs/using-tcp-forwarding)
-- [Cloud NAT overview](https://cloud.google.com/nat/docs/overview)
-- [VPC Network Peering](https://cloud.google.com/vpc/docs/vpc-peering)
