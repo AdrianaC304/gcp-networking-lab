@@ -126,6 +126,8 @@ We will simulate a classic two-tier application:
 
 ### Do it
 
+First, personalize your web server. Open `startup/web.sh` (with `nano` or the Cloud Shell editor) and replace `CHANGE-ME` with your name. Your page will greet with it, so you will always know whose `web-vm` answered.
+
 ```bash
 gcloud compute instances create web-vm \
   --zone=us-central1-a --machine-type=e2-micro \
@@ -222,7 +224,7 @@ gcloud compute firewall-rules create allow-http \
 
 ```bash
 curl http://$WEB_EXT
-# <h1>Hello from web-vm</h1>
+# <h1>Hello from web-vm (your-name)</h1>
 ```
 
 ### 3.4 Database: only the web can reach it
@@ -564,6 +566,9 @@ Yes. If an inbound connection is allowed, its reply traffic is allowed automatic
 > [!CAUTION]
 > Do this when you finish. VMs and Cloud NAT charge for every hour they exist.
 
+> [!TIP]
+> Going to do the [bonus exercise](#bonus--visit-your-partners-network) with a classmate? Do it **before** cleaning up, because it uses everything you built.
+
 ```bash
 source scripts/00-env.sh
 bash scripts/99-cleanup.sh
@@ -573,3 +578,116 @@ The script deletes, in order: VMs → peerings → Cloud NAT and router → fire
 
 ---
 
+
+## Bonus — Visit your partner's network
+
+So far you peered `vpc-shared` with your own `vpc-prod`. In Part 5 you played both teams yourself. Now the other team is real: **your partner, in another project**. Work in pairs. Each of you is the **host** (your `vpc-prod`, `web-vm` and `db-vm` from the lab) and also a **guest** who visits the partner's `vpc-prod`.
+
+
+### Step 1 — The obvious idea: peer `vpc-prod` with `vpc-prod`
+
+Each of you creates a peering from your `vpc-prod` to your partner's `vpc-prod`.
+
+- Which ranges are the problem? *(Look at the table in Part 1. Who chose those ranges?)*
+- To fix it "properly", one of you would have to change the ranges of `vpc-prod`. What would you have to delete and rebuild? Would you do that to a production network?
+
+You cannot change `vpc-prod`, so you will add a **new** network that does not overlap with anything. It works the same way as `vpc-shared` in Part 5, but this time it connects to your **partner's** `vpc-prod`, not your own.
+
+In **your** project, create:
+
+1. `vpc-guest` (custom mode) with a subnet `subnet-guest` in `us-central1`, range **`10.100.N.0/24`** (N = your number).
+2. The rule you need to SSH into it through IAP.
+3. A VM `guest-vm` with **no external IP**, as you did with `tools-vm`.
+
+Before you continue, check this table: no range may overlap with the ranges of the network you are going to peer with.
+
+| Network | Ranges |
+|---|---|
+| Your `vpc-guest` | `10.100.N.0/24` |
+| Your partner's `vpc-prod` | `10.10.0.0/24`, `10.20.0.0/24` |
+
+### Step 2 — Peer your guest network with your partner's `vpc-prod`
+
+Now each of you creates **two** peerings:
+
+- From your `vpc-guest` → your partner's `vpc-prod` (you visit them).
+- From your `vpc-prod` → your partner's `vpc-guest` (they visit you).
+
+**Check:**
+
+1. Your `vpc-prod` now has **two** peerings. Both must be `ACTIVE`. Which half was missing while they were `INACTIVE`?
+2. List the routes of `vpc-guest`. You should see `10.10.0.0/24` and `10.20.0.0/24`. Do you also see `10.30.0.0/24` (your partner's `vpc-shared`)? Why not? *(Part 6.)*
+
+> [!NOTE]
+> **Think about it:** your **own** `web-vm` also has an IP in `10.10.0.0/24`, maybe even the same one as your partner's. When `guest-vm` connects to that IP, how does it know to go to your partner's VM and not yours?
+
+### Step 3 — Visit your partner's web
+
+From `guest-vm`, call your partner's `web-vm` on its **internal IP**, port 80.
+
+**Expected result:** it **works right away**, and your partner did not do anything.
+
+- Which of your partner's rules let you in? Look again at the comment in Part 5.4.
+- The page should say `Hello from web-vm (<your partner's name>)`, the name they put in `startup/web.sh`. Their `web-vm` probably has the **same internal IP** as yours, so the name is the quickest way to tell them apart. Ask your partner to confirm in their firewall logs too: what source IP do they see?
+
+> [!NOTE]
+> **Think about it:** a rule written "for the internet" (`0.0.0.0/0`) also opens the door to **every network that is peered** with you. Is that what you, as the host, want?
+
+### Step 4 — Try to reach your partner's database
+
+From `guest-vm`, call your partner's `db-vm` on port 5432.
+
+**Expected result:** `BLOCKED`.
+
+1. Which rule of your partner's blocks you? This time it **does** appear in their logs. Which rule from Part 3 makes it visible?
+2. Why doesn't `allow-db-from-web` help you, and why doesn't `allow-db-from-shared` help you either?
+
+**The host opens the door.** Each of you creates **one** rule in your own `vpc-prod` so that your partner can reach your database. It must meet **all** of these requirements:
+
+- [ ] Only **tcp:5432**.
+- [ ] Only from your partner's **`guest-vm` IP** (not their whole subnet, and not `0.0.0.0/0`).
+- [ ] Only to VMs tagged **`db`**.
+- [ ] **Logging enabled.**
+
+**Check:**
+
+- Your partner receives `fake-db OK from db-vm (10.20.0.x)`. Paste it in the chat as proof.
+- Note that `guest-vm` is in `us-central1` and `db-vm` is in `europe-west1`. Did you need anything extra to cross regions? Why? *(Part 3.4.)*
+- **Your changes must not break your own lab.** Run `scripts/test-connectivity.sh` again. Everything must still be `OK`.
+
+### Step 5 — Audit your partner's rule
+
+You cannot see your partner's project, so ask them to paste the full description of their new rule in the chat. Review it like a security reviewer:
+
+1. Does it meet the four requirements from Step 5?
+2. From `guest-vm`, try to reach their `db-vm` on **port 22** and their `web-vm` on **port 22**. Both must fail. Which of their rules stops you, and does the attempt appear in their logs?
+
+
+### Discussion questions
+
+1. To reach your partner's database, how many "doors" had to be open, and who controls each one?
+2. You created a peering to a project where you have **no permissions**. Is that a security hole?
+3. In Step 4 you reached your partner's web without them doing anything. What would you change in `allow-http` so that only the internet, and not your peers, can reach port 80? Is that even possible with a single rule?
+4. If tomorrow 30 teams need to talk to `vpc-prod`, would you keep adding peerings? What would you use instead?
+
+<details>
+<summary>Answers for discussion</summary>
+
+1. **Four:** your peering, your partner's peering (both must exist for `ACTIVE`), the routes the peering exchanges automatically, and the **ingress rule in the host's `vpc-prod`**. The guest's egress is open by default (implied *allow all egress*). The guest controls their half of the peering. The host controls the other half and the firewall.
+2. No. A peering only becomes `ACTIVE` when **both** sides create it, so both have to agree. Even then, nothing reaches `db-vm` until the host **explicitly allows it**. Step 4 shows the real risk: rules that were already too wide before the peering existed.
+3. `allow-http` filters by source **range**, and the internet is "everything". You can add a higher-priority `DENY` for the peered ranges (`10.100.0.0/16`), or replace `0.0.0.0/0` with the ranges you really expect, such as a load balancer's.
+4. No. Each pair needs two peerings, there is a limit per VPC, ranges must not overlap with **any** peer, and peering is not transitive. With many teams, use a hub: **Shared VPC** or **Network Connectivity Center**.
+
+</details>
+
+### Clean up the bonus
+
+> [!CAUTION]
+> `scripts/99-cleanup.sh` **does not know about these resources**. Clean them up first, each in your own project, and **then** run the lab clean-up.
+
+1. Delete your two bonus peerings: `vpc-guest` → partner, and `vpc-prod` → partner's `vpc-guest`.
+2. Delete `guest-vm`, its firewall rule, `subnet-guest` and `vpc-guest`.
+3. Tell your partner. What state does **their** half of the peering show now?
+4. Run the [Clean up](#clean-up) from the main lab.
+
+---
