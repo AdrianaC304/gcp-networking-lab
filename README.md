@@ -579,12 +579,12 @@ The script deletes, in order: VMs → peerings → Cloud NAT and router → fire
 ---
 
 
-## Bonus — Visit your partner's network
+## Extra — Visit your partner's network
 
 So far you peered `vpc-shared` with your own `vpc-prod`. In Part 5 you played both teams yourself. Now the other team is real: **your partner, in another project**. Work in pairs. Each of you is the **host** (your `vpc-prod`, `web-vm` and `db-vm` from the lab) and also a **guest** who visits the partner's `vpc-prod`.
 
 
-### Step 1 — The obvious idea: peer `vpc-prod` with `vpc-prod`
+### Step 1 — Create a new VPC
 
 Each of you creates a peering from your `vpc-prod` to your partner's `vpc-prod`.
 
