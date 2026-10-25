@@ -6,19 +6,6 @@ Every step has three parts. **Why** explains the concept from the slides, **Do i
 
 ![Final architecture](images/architecture.svg)
 
----
-
-## What you will learn
-
-| Session topic | What you do in this lab |
-|---|---|
-| **Virtual Private Cloud (VPC)** | Create a *custom-mode* VPC. You will see that it is global, while its subnets are regional. |
-| **Subnets and ports** | Create two subnets in two regions with non-overlapping CIDR ranges. Run services on ports 80 and 5432. |
-| **Firewalls** | Start from the implied *deny all ingress*. Open only what is needed using tags, priorities and logging. |
-| **Ingress and egress** | Keep a VM private (no external IP) and give it outbound internet with Cloud NAT. Block egress with a firewall rule. |
-| **VPC peering** | Connect two VPCs over internal IPs and prove that peering is **not transitive**. |
-
----
 
 ## Before you start
 
