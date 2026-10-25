@@ -483,13 +483,6 @@ A partner needs to connect to `vpc-shared`. Without copying the commands above, 
 2. Create the peering **vpc-shared ↔ vpc-partner** (both sides).
 3. From `partner-vm`, try `curl http://$WEB_INT`.
 
-**Questions:**
-
-- Does it work? Why not, if `vpc-partner` → `vpc-shared` → `vpc-prod` are all peered?
-- Run `gcloud compute routes list --filter="network:vpc-partner"`. Does it have a route to `10.10.0.0/24`?
-- What would you need to do so that `partner-vm` can reach `web-vm`?
-- What happens if you try to peer `vpc-prod` with a VPC that uses `10.10.0.0/24`?
-
 <details>
 <summary>Show the solution</summary>
 
@@ -513,71 +506,8 @@ gcloud compute ssh partner-vm --zone=us-central1-a --tunnel-through-iap --comman
 
 </details>
 
----
-
-## Review questions
-
-<details>
-<summary><b>1.</b> Why did we create the VPC in <i>custom</i> mode and not use the <code>default</code> network?</summary>
-
-Because in custom mode **you decide** which subnets exist and with which ranges. The `default` network creates one subnet per region with predefined ranges and fairly open rules (for example SSH and RDP from anywhere). In production, those ranges could collide with your offices or with other VPCs you want to peer with.
-</details>
-
-<details>
-<summary><b>2.</b> Before Part 3, nginx was running but <code>curl</code> failed. Which rule blocked it?</summary>
-
-The **implied deny all ingress** rule (priority 65535). Every VPC has it, you cannot delete it and it does not write logs.
-</details>
-
-<details>
-<summary><b>3.</b> What is the difference between <code>--source-tags</code> and <code>--source-ranges</code>? When can you NOT use tags?</summary>
-
-`--source-ranges` filters by **source IP** (CIDR). `--source-tags` filters by the **tag of the source VM**, which is more flexible because it does not depend on IPs. Tags only work **within the same VPC**: for traffic that comes through a peering, from the internet or from on-premises, you must use IP ranges.
-</details>
-
-<details>
-<summary><b>4.</b> If <code>allow-http</code> (priority 1000, ALLOW) and <code>deny-http-temp</code> (priority 500, DENY) both match, which wins?</summary>
-
-`deny-http-temp`, because **500 < 1000**: a lower number means more priority. At equal priority, DENY wins over ALLOW.
-</details>
-
-<details>
-<summary><b>5.</b> Does Cloud NAT allow someone from the internet to connect to <code>db-vm</code>?</summary>
-
-**No.** Cloud NAT only translates connections **started by the VM** to the outside (egress). It does not open any inbound port.
-</details>
-
-<details>
-<summary><b>6.</b> <code>web-vm</code> (us-central1) and <code>db-vm</code> (europe-west1) talk over internal IPs. Why don't they need peering or a VPN?</summary>
-
-Because **a VPC is a global resource**: all its subnets, in any region, share the same internal routing.
-</details>
-
-<details>
-<summary><b>7.</b> Is the firewall stateful? What does that mean for the replies from <code>web-vm</code>?</summary>
-
-Yes. If an inbound connection is allowed, its reply traffic is allowed automatically without an egress rule. That is why `allow-http` is enough to load the page.
-</details>
 
 ---
-
-## Clean up
-
-> [!CAUTION]
-> Do this when you finish. VMs and Cloud NAT charge for every hour they exist.
-
-> [!TIP]
-> Going to do the [bonus exercise](#bonus--visit-your-partners-network) with a classmate? Do it **before** cleaning up, because it uses everything you built.
-
-```bash
-source scripts/00-env.sh
-bash scripts/99-cleanup.sh
-```
-
-The script deletes, in order: VMs → peerings → Cloud NAT and router → firewall rules → subnets → networks. Make sure that only `default` remains (if you still have it) in **VPC network → VPC networks**.
-
----
-
 
 ## Extra — Visit your partner's network
 
@@ -680,14 +610,26 @@ You cannot see your partner's project, so ask them to paste the full description
 
 </details>
 
-### Clean up the bonus
+## Clean up
 
 > [!CAUTION]
-> `scripts/99-cleanup.sh` **does not know about these resources**. Clean them up first, each in your own project, and **then** run the lab clean-up.
+> Do this when you finish. VMs and Cloud NAT charge for every hour they exist.
 
-1. Delete your two bonus peerings: `vpc-guest` → partner, and `vpc-prod` → partner's `vpc-guest`.
+### 1. If you did the Extra exercise
+
+`scripts/99-cleanup.sh` **does not know about these resources**, so delete them first, each in your own project:
+
+1. Delete your two extra peerings: `vpc-guest` → partner, and `vpc-prod` → partner's `vpc-guest`.
 2. Delete `guest-vm`, its firewall rule, `subnet-guest` and `vpc-guest`.
 3. Tell your partner. What state does **their** half of the peering show now?
-4. Run the [Clean up](#clean-up) from the main lab.
+
+### 2. Everything from the lab
+
+```bash
+source scripts/00-env.sh
+bash scripts/99-cleanup.sh
+```
+
+The script deletes, in order: VMs → peerings → Cloud NAT and router → firewall rules → subnets → networks. Make sure that only `default` remains (if you still have it) in **VPC network → VPC networks**.
 
 ---
