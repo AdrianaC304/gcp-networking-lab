@@ -2,8 +2,6 @@
 
 Hands-on exercise for the **GCP Networking** session (*Networking and connectivity*). You build a small, realistic network from scratch: a public web server, a private database, the firewall rules between them, outbound internet for the private VM, and a second network connected by VPC peering.
 
-Every step has three parts. **Why** explains the concept from the slides, **Do it** has the commands to run, and **Check** tells you what you should see before moving on.
-
 ![Final architecture](images/architecture.svg)
 
 
